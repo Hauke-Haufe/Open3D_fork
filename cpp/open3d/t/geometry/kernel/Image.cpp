@@ -59,6 +59,19 @@ void PyrDownDepth(const core::Tensor &src,
     }
 }
 
+void PyrDownMajority(const core::Tensor &src, 
+                     core::Tensor &dst){
+
+    core::Device device = src.GetDevice();
+    if (device.IsCPU()) {
+        PyrDownMajorityCPU(src, dst);
+    } else if (device.IsCUDA()) {
+        CUDA_CALL(PyrDownMajorityCUDA, src, dst);
+    } else {
+        utility::LogError("Unimplemented device");
+    }
+}
+
 void CreateVertexMap(const core::Tensor &src,
                      core::Tensor &dst,
                      const core::Tensor &intrinsics,
@@ -84,6 +97,35 @@ void CreateNormalMap(const core::Tensor &src,
         CreateNormalMapCPU(src, dst, invalid_fill);
     } else if (device.IsCUDA()) {
         CUDA_CALL(CreateNormalMapCUDA, src, dst, invalid_fill);
+    } else {
+        utility::LogError("Unimplemented device");
+    }
+}
+
+void CreateNormalMapMaskout(const core::Tensor &src,
+                            core::Tensor &dst, 
+                            const core::Tensor &mask, 
+                            float invalid_fill){
+
+    core::Device device = src.GetDevice();
+    if (device.IsCPU()) {
+        CreateNormalMapMaskoutCPU(src, dst, mask, invalid_fill);
+    } else if (device.IsCUDA()) {
+        CUDA_CALL(CreateNormalMapMaskoutCUDA, src, dst, mask, invalid_fill);
+    } else {
+        utility::LogError("Unimplemented device");
+    }
+}
+
+void FilterSobelMaskout(const core::Tensor &src, 
+                        const core::Tensor& mask,
+                        core::Tensor& dx, 
+                        core::Tensor& dy){
+    core::Device device = src.GetDevice();
+    if (device.IsCPU()) {
+        FilterSobelMaskoutCPU(src, mask, dx, dy);
+    } else if (device.IsCUDA()) {
+        CUDA_CALL(FilterSobelMaskoutCUDA, src, mask, dx, dy);
     } else {
         utility::LogError("Unimplemented device");
     }

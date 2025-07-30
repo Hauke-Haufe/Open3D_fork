@@ -1,6 +1,9 @@
 {
     "files.associations": {
+<<<<<<< HEAD
         "*.isph": "cpp",
+=======
+>>>>>>> 8e98f44 (Pyrdown for boolian masks, FilterSobel maskout, CreateNormals maskout)
         "array": "cpp",
         "atomic": "cpp",
         "bit": "cpp",
@@ -78,6 +81,11 @@
         "__verbose_abort": "cpp",
         "ios": "cpp",
         "locale": "cpp",
+<<<<<<< HEAD
         "print": "cpp"
+=======
+        "print": "cpp",
+        "*.inc": "cpp"
+>>>>>>> 8e98f44 (Pyrdown for boolian masks, FilterSobel maskout, CreateNormals maskout)
     }
 }

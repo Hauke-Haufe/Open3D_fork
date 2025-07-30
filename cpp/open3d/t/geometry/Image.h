@@ -223,6 +223,12 @@ public:
     ///
     /// \param kernel_size: Sobel filter kernel size, either 3 or 5.
     std::pair<Image, Image> FilterSobel(int kernel_size = 3) const;
+    
+    /// \brief Return a pair of new gradient images (dx, dy) after Sobel
+    /// with a part of the image removed.
+    ///
+    /// \param mask: mask for masking out a part of the Image
+    std::pair<Image, Image> FilterSobelMaskout(const core::Tensor& mask) const;
 
     /// \brief Return a new downsampled image with pyramid downsampling.
     ///
@@ -231,6 +237,13 @@ public:
     ///
     /// \returns Half sized downsampled depth image.
     Image PyrDown() const;
+    
+    /// \brief Return a new downsampled image with pyramid downsampling for boolian Images.
+    ///
+    ///The return Image is created by max Pooling with kernel size 2x2
+    ///
+    /// \returns Half sized downsampled bool image.
+    Image PyrDownLogical() const; 
 
     /// \brief Edge and invalid value preserving downsampling by 2 specifically
     /// for depth images.
@@ -294,6 +307,8 @@ public:
     /// \returns Normal map of shape (rows, cols, channels=3) and Dtype Float32,
     /// with invalid normals assigned the \p invalid_fill value.
     Image CreateNormalMap(float invalid_fill = 0.0f);
+
+    Image CreateNormalMapMaskout(const core::Tensor mask, float invalid_fill = 0.0f); 
 
     /// \brief Colorize an input depth image (with Dtype UInt16 or Float32).
     ///

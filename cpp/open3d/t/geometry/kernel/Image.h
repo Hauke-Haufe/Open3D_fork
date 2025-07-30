@@ -32,6 +32,9 @@ void PyrDownDepth(const core::Tensor &src,
                   float diff_threshold,
                   float invalid_fill);
 
+void PyrDownMajority(const core::Tensor &src, 
+                     core::Tensor &dst);
+
 void CreateVertexMap(const core::Tensor &src,
                      core::Tensor &dst,
                      const core::Tensor &intrinsics,
@@ -40,6 +43,16 @@ void CreateVertexMap(const core::Tensor &src,
 void CreateNormalMap(const core::Tensor &src,
                      core::Tensor &dst,
                      float invalid_fill);
+
+void CreateNormalMapMaskout(const core::Tensor &src,
+                            core::Tensor &dst,
+                            const core::Tensor &mask, 
+                            float invalid_fill);
+
+void FilterSobelMaskout(const core::Tensor &src, 
+                        const core::Tensor& mask,
+                        core::Tensor& dx, 
+                        core::Tensor& dy);
 
 void ColorizeDepth(const core::Tensor &src,
                    core::Tensor &dst,
@@ -64,6 +77,9 @@ void PyrDownDepthCPU(const core::Tensor &src,
                      float diff_threshold,
                      float invalid_fill);
 
+void PyrDownMajorityCPU(const core::Tensor &src, 
+                    core::Tensor &dst);
+
 void CreateVertexMapCPU(const core::Tensor &src,
                         core::Tensor &dst,
                         const core::Tensor &intrinsics,
@@ -72,6 +88,16 @@ void CreateVertexMapCPU(const core::Tensor &src,
 void CreateNormalMapCPU(const core::Tensor &src,
                         core::Tensor &dst,
                         float invalid_fill);
+
+void CreateNormalMapMaskoutCPU(const core::Tensor& src, 
+                                core::Tensor& dst, 
+                                const core::Tensor& mask, 
+                                float invalid_fill);
+
+void FilterSobelMaskoutCPU(const core::Tensor &src, 
+                        const core::Tensor& mask,
+                        core::Tensor& dx, 
+                        core::Tensor& dy);
 
 void ColorizeDepthCPU(const core::Tensor &src,
                       core::Tensor &dst,
@@ -97,10 +123,23 @@ void PyrDownDepthCUDA(const core::Tensor &src,
                       float diff_threshold,
                       float invalid_fill);
 
+void PyrDownMajorityCUDA(const core::Tensor &src, 
+                    core::Tensor &dst);
+
 void CreateVertexMapCUDA(const core::Tensor &src,
                          core::Tensor &dst,
                          const core::Tensor &intrinsics,
                          float invalid_fill);
+
+void CreateNormalMapMaskoutCUDA(const core::Tensor& src, 
+                                core::Tensor& dst, 
+                                const core::Tensor& mask, 
+                                float invalid_fill);
+
+void FilterSobelMaskoutCUDA(const core::Tensor &src, 
+                        const core::Tensor& mask,
+                        core::Tensor& dx, 
+                        core::Tensor& dy);
 
 void CreateNormalMapCUDA(const core::Tensor &src,
                          core::Tensor &dst,

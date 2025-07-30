@@ -192,6 +192,50 @@ void PyrDownDepthCPU
 }
 
 #ifdef __CUDACC__
+void PyrDownMajorityCUDA
+#else
+void PyrDownMajorityCPU
+#endif
+        (const core::Tensor &src, 
+         core::Tensor &dst){
+    
+    NDArrayIndexer src_indexer(src, 2);
+    NDArrayIndexer dst_indexer(dst, 2);
+    
+    int64_t rows = dst_indexer.GetShape(0);
+    int64_t cols = dst_indexer.GetShape(1);
+    int64_t n = rows * cols;
+
+
+     core::ParallelFor(
+            src.GetDevice(), n, [=] OPEN3D_DEVICE(int64_t workload_idx) {
+                int64_t y = workload_idx / cols;
+                int64_t x = workload_idx % cols;
+                
+                int count = 0;
+                int64_t sx = x * 2;
+                int64_t sy = y * 2;
+
+                if (y < rows - 1 && x < cols - 1) {
+
+                    for (int dy = 0; dy < 2; ++dy) {
+                        for (int dx = 0; dx < 2; ++dx) {
+                            int yy = sy + dy;
+                            int xx = sx + dx;
+                            if (src_indexer.GetDataPtr<bool>(xx, yy)[0]) {
+                                count++;
+                            }
+                        }
+                    }
+
+                    bool result = (count >= 2);
+                    dst_indexer.GetDataPtr<bool>(x, y)[0] = result;
+                }
+    });
+}
+
+
+#ifdef __CUDACC__
 void CreateVertexMapCUDA
 #else
 void CreateVertexMapCPU
@@ -301,6 +345,142 @@ void CreateNormalMapCPU
                     normal[2] = invalid_fill;
                 }
             });
+}
+
+#ifdef __CUDACC__
+void CreateNormalMapMaskoutCUDA
+#else
+void CreateNormalMapMaskoutCPU
+#endif
+        (const core::Tensor& src, core::Tensor& dst, const core::Tensor& mask, float invalid_fill) {
+    NDArrayIndexer src_indexer(src, 2);
+    NDArrayIndexer dst_indexer(dst, 2);
+    NDArrayIndexer mask_indexer(mask, 2);
+
+    int64_t rows = src_indexer.GetShape(0);
+    int64_t cols = src_indexer.GetShape(1);
+    int64_t n = rows * cols;
+
+    core::ParallelFor(
+            src.GetDevice(), n, [=] OPEN3D_DEVICE(int64_t workload_idx) {
+                int64_t y = workload_idx / cols;
+                int64_t x = workload_idx % cols;
+
+                float* normal = dst_indexer.GetDataPtr<float>(x, y);
+                bool* m00 = mask_indexer.GetDataPtr<bool>(x,y);
+                bool* m01 = mask_indexer.GetDataPtr<bool>(x+1,y);
+                bool* m10 = mask_indexer.GetDataPtr<bool>(x,y+1);
+
+                if ((y < rows - 1 && x < cols - 1) || (*m00 || *m10|| *m01)){
+                    float* v00 = src_indexer.GetDataPtr<float>(x, y);
+                    float* v10 = src_indexer.GetDataPtr<float>(x + 1, y);
+                    float* v01 = src_indexer.GetDataPtr<float>(x, y + 1);
+
+                    if ((v00[0] == invalid_fill && v00[1] == invalid_fill &&
+                         v00[2] == invalid_fill) ||
+                        (v01[0] == invalid_fill && v01[1] == invalid_fill &&
+                         v01[2] == invalid_fill) ||
+                        (v10[0] == invalid_fill && v10[1] == invalid_fill &&
+                         v10[2] == invalid_fill)) {
+                        normal[0] = invalid_fill;
+                        normal[1] = invalid_fill;
+                        normal[2] = invalid_fill;
+                        return;
+                    }
+
+                    float dx0 = v01[0] - v00[0];
+                    float dy0 = v01[1] - v00[1];
+                    float dz0 = v01[2] - v00[2];
+
+                    float dx1 = v10[0] - v00[0];
+                    float dy1 = v10[1] - v00[1];
+                    float dz1 = v10[2] - v00[2];
+
+                    normal[0] = dy0 * dz1 - dz0 * dy1;
+                    normal[1] = dz0 * dx1 - dx0 * dz1;
+                    normal[2] = dx0 * dy1 - dy0 * dx1;
+
+                    constexpr float EPSILON = 1e-5f;
+                    float normal_norm =
+                            sqrt(normal[0] * normal[0] + normal[1] * normal[1] +
+                                 normal[2] * normal[2]);
+                    normal_norm = std::max(normal_norm, EPSILON);
+                    normal[0] /= normal_norm;
+                    normal[1] /= normal_norm;
+                    normal[2] /= normal_norm;
+                } else {
+                    normal[0] = invalid_fill;
+                    normal[1] = invalid_fill;
+                    normal[2] = invalid_fill;
+                }
+            });
+}
+
+#ifdef __CUDACC__
+void FilterSobelMaskoutCUDA
+#else
+void FilterSobelMaskoutCPU
+#endif
+        (const core::Tensor& src,
+         const core::Tensor& mask, 
+         core::Tensor& dx_tensor, 
+         core::Tensor& dy_tensor){
+
+    NDArrayIndexer src_indexer(src, 2);
+    NDArrayIndexer dx_indexer(dx_tensor, 2);
+    NDArrayIndexer dy_indexer(dy_tensor, 2);
+    NDArrayIndexer mask_indexer(mask, 2);
+
+    int64_t rows = src_indexer.GetShape(0);
+    int64_t cols = src_indexer.GetShape(1);
+    int64_t n = rows * cols;
+
+    constexpr int sobel_x[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+    constexpr int sobel_y[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+
+    DISPATCH_DTYPE_TO_TEMPLATE(src.GetDtype(), [&]() {
+        core::ParallelFor(
+            src.GetDevice(), n, [=] OPEN3D_DEVICE(int64_t idx) {
+                int64_t y = idx / cols;
+                int64_t x = idx % cols;
+
+                if (x == 0 || y == 0 || x == cols - 1 || y == rows - 1){
+                    *dx_indexer.GetDataPtr<scalar_t>(x, y) = 0;
+                    *dy_indexer.GetDataPtr<scalar_t>(x, y) = 0;
+                    return;
+                }
+
+                bool masked = false;
+                for (int dy = -1; dy <= 1 && !masked; ++dy) {
+                    for (int dx = -1; dx <= 1 && !masked; ++dx) {
+                        if (*mask_indexer.GetDataPtr<bool>(x + dx, y + dy)) {
+                            masked = true;
+                        }
+                    }
+                }
+
+                if (masked){
+                    *dx_indexer.GetDataPtr<scalar_t>(x, y) = 0;
+                    *dy_indexer.GetDataPtr<scalar_t>(x, y) = 0;
+                    return;
+                }
+
+                float gx = 0.0f;
+                float gy = 0.0f;
+                
+                for (int ky = -1; ky <= 1; ++ky) {
+                    for (int kx = -1; kx <= 1; ++kx) {
+                        float val = static_cast<float>(
+                            src_indexer.GetDataPtr<scalar_t>(x + kx, y + ky)[0]);
+                        gx += val * sobel_x[ky + 1][kx + 1];
+                        gy += val * sobel_y[ky + 1][kx + 1];
+                    }
+                }
+
+                *dx_indexer.GetDataPtr<scalar_t>(x, y) = static_cast<scalar_t>(gx);
+                *dy_indexer.GetDataPtr<scalar_t>(x, y) = static_cast<scalar_t>(gy);
+            });
+    });
 }
 
 #ifdef __CUDACC__

@@ -391,9 +391,55 @@ std::pair<Image, Image> Image::FilterSobel(int kernel_size) const {
     return std::make_pair(dst_im_dx, dst_im_dy);
 }
 
+std::pair<Image, Image> Image::FilterSobelMaskout(const core::Tensor& mask) const {
+    if (GetRows() <= 0 || GetCols() <= 0 || GetChannels() != 1) {
+        utility::LogError(
+                "Invalid shape, expected a 1 channel image, but got ({}, {}, "
+                "{})",
+                GetRows(), GetCols(), GetChannels());
+    }
+    core::AssertTensorShape(mask, AsTensor().GetShape());
+
+    Image dst_im_dx, dst_im_dy;
+    core::Dtype dtype = GetDtype();
+    if (dtype == core::Float32) {
+        dst_im_dx = core::Tensor::EmptyLike(data_);
+        dst_im_dy = core::Tensor::EmptyLike(data_);
+    } else if (dtype == core::UInt8) {
+        dst_im_dx = core::Tensor::Empty(data_.GetShape(), core::Int8,
+                                        data_.GetDevice());
+        dst_im_dy = core::Tensor::Empty(data_.GetShape(), core::Int8,
+                                        data_.GetDevice());
+    }
+
+    kernel::image::FilterSobelMaskout(AsTensor(), mask, dst_im_dx.data_, dst_im_dy.data_);
+
+    if (dtype == core::UInt8){
+        dst_im_dx =  dst_im_dx.To(core::UInt16);
+        dst_im_dy = dst_im_dy.To(core::UInt16);
+    }
+
+    return std::make_pair(dst_im_dx, dst_im_dy);
+}
+
 Image Image::PyrDown() const {
     Image blur = FilterGaussian(5, 1.0f);
     return blur.Resize(0.5, InterpType::Nearest);
+}
+
+Image Image::PyrDownLogical() const {
+    if (GetRows() <= 0 || GetCols() <= 0 || GetChannels() != 1) {
+        utility::LogError(
+                "Invalid shape, expected a 1 channel image, but got ({}, {}, "
+                "{})",
+                GetRows(), GetCols(), GetChannels());
+    }
+    core::AssertTensorDtype(AsTensor(), core::Bool);
+    core::Tensor dst_tensor = core::Tensor::Empty(
+            {GetRows() / 2, GetCols() / 2, 1}, core::Dtype::Bool, GetDevice());
+    kernel::image::PyrDownMajority(AsTensor(), dst_tensor);
+
+    return t::geometry::Image(dst_tensor);
 }
 
 Image Image::PyrDownDepth(float diff_threshold, float invalid_fill) const {
@@ -475,6 +521,22 @@ Image Image::CreateNormalMap(float invalid_fill) {
 
     Image dst_im(GetRows(), GetCols(), 3, GetDtype(), GetDevice());
     kernel::image::CreateNormalMap(data_, dst_im.data_, invalid_fill);
+    return dst_im;
+}
+
+Image Image::CreateNormalMapMaskout(const core::Tensor mask, float invalid_fill) {
+    if (GetRows() <= 0 || GetCols() <= 0 || GetChannels() != 3) {
+        utility::LogError(
+                "Invalid shape, expected a 3 channel image, but got ({}, {}, "
+                "{})",
+                GetRows(), GetCols(), GetChannels());
+    }
+
+    core::AssertTensorDtype(AsTensor(), core::Float32);
+    core::AssertTensorDtype(mask, core::Bool);
+
+    Image dst_im(GetRows(), GetCols(), 3, GetDtype(), GetDevice());
+    kernel::image::CreateNormalMapMaskout(data_, dst_im.data_, mask, invalid_fill);
     return dst_im;
 }
 
