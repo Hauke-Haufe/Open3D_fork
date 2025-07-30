@@ -74,6 +74,13 @@ void pybind_image_declarations(py::module &m) {
                     "processing, the image pair should be aligned (same "
                     "viewpoint and  "
                     "resolution).");
+     py::class_<RGBDMImage, PyGeometry<RGBDMImage>, std::shared_ptr<RGBDMImage>,
+               Geometry>
+               rgbdm_image( m, "RGBDMImage",
+                    "RGBDImage is a pair of color, depth and mask images. For most "
+                    "processing, the image pair should be aligned (same "
+                    "viewpoint and  "
+                    "resolution).");
 }
 void pybind_image_definitions(py::module &m) {
     auto image = static_cast<py::class_<Image, PyGeometry<Image>,
