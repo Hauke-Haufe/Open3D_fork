@@ -262,7 +262,7 @@ void ComputeMaskoutOdometryResultIntensity(const core::Tensor &source_depth,
         CUDA_CALL(ComputeMaskoutOdometryResultIntensityCUDA, source_depth,
                   target_depth, source_intensity, target_intensity,
                   target_intensity_dx, target_intensity_dy, source_vertex_map,
-                  source_mask_b, target_mask_b, 
+                  source_mask, target_mask, 
                   intrinsics_d, trans_d, delta, inlier_residual, inlier_count,
                   depth_outlier_trunc, intensity_huber_delta);
     } else {
@@ -394,7 +394,7 @@ void ComputeMaskoutOdometryResultPointToPlane(
         core::CUDAScopedDevice scoped_device(device);
         CUDA_CALL(ComputeMaskoutOdometryResultPointToPlaneCUDA, 
                 source_vertex_map, target_vertex_map, target_normal_map,
-                source_mask_b, target_mask_b, intrinsics_d, trans_d,
+                source_mask, target_mask, intrinsics_d, trans_d,
                 delta, inlier_residual, inlier_count, depth_outlier_trunc,
                 depth_huber_delta);
     } else {

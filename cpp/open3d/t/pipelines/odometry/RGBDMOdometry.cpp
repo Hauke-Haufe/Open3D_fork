@@ -236,6 +236,8 @@ OdometryResult ComputeSourceMaskoutOdometryResultPointToPlane(
                                           source_vertex_map.GetShape(1)));
 }
 
+
+
 OdometryResult RGBDMOdometryMultiScaleIntensity(
         const RGBDMImage& source,
         const RGBDMImage& target,
@@ -291,7 +293,7 @@ OdometryResult RGBDMOdometryMultiScaleIntensity(
                 source_depth_curr.CreateVertexMap(intrinsics_pyr, NAN);
         source_vertex_maps[n_levels - 1 - i] = source_vertex_map.AsTensor();
 
-        auto target_intensity_grad = target_intensity_curr.FilterSobelMaskout();
+        auto target_intensity_grad = target_intensity_curr.FilterSobelMaskout(target_mask_curr.AsTensor());
         target_intensity_dx[n_levels - 1 - i] =
                 target_intensity_grad.first.AsTensor();
         target_intensity_dy[n_levels - 1 - i] =
@@ -307,8 +309,8 @@ OdometryResult RGBDMOdometryMultiScaleIntensity(
             source_intensity_curr = source_intensity_curr.PyrDown();
             target_intensity_curr = target_intensity_curr.PyrDown();
 
-            source_mask_curr = source_mask_curr.PyrDown();
-            target_mask_curr = target_mask_curr.PyrDown();
+            source_mask_curr = source_mask_curr.PyrDownLogical();
+            target_mask_curr = target_mask_curr.PyrDownLogical();
 
             intrinsics_pyr /= 2;
             intrinsics_pyr[-1][-1] = 1;
@@ -319,7 +321,7 @@ OdometryResult RGBDMOdometryMultiScaleIntensity(
     OdometryResult result(trans, /*prev rmse*/ 0.0, /*prev fitness*/ 1.0);
     for (int64_t i = 0; i < n_levels; ++i) {
         for (int iter = 0; iter < criteria[i].max_iteration_; ++iter) {
-            auto delta_result = ComputeDOdometryResultIntensity(
+            auto delta_result = ComputeMaskoutOdometryResultIntensity(
                     source_depth[i], target_depth[i], source_intensity[i],
                     target_intensity[i], target_intensity_dx[i],
                     target_intensity_dy[i], source_vertex_maps[i],
@@ -417,7 +419,7 @@ OdometryResult RGBDMOdometryMultiScaleIntensity(
             source_intensity_curr = source_intensity_curr.PyrDown();
             target_intensity_curr = target_intensity_curr.PyrDown();
 
-            source_mask_curr = source_mask_curr.PyrDown();
+            source_mask_curr = source_mask_curr.PyrDownLogical();
 
             intrinsics_pyr /= 2;
             intrinsics_pyr[-1][-1] = 1;
@@ -428,7 +430,7 @@ OdometryResult RGBDMOdometryMultiScaleIntensity(
     OdometryResult result(trans, /*prev rmse*/ 0.0, /*prev fitness*/ 1.0);
     for (int64_t i = 0; i < n_levels; ++i) {
         for (int iter = 0; iter < criteria[i].max_iteration_; ++iter) {
-            auto delta_result = ComputeSOdometryResultIntensity(
+            auto delta_result = ComputeSourceMaskoutOdometryResultIntensity(
                     source_depth[i], target_depth[i], source_intensity[i],
                     target_intensity[i], target_intensity_dx[i],
                     target_intensity_dy[i], source_vertex_maps[i], source_mask[i], 
@@ -515,13 +517,13 @@ OdometryResult RGBDMOdometryMultiScaleHybrid(
                         source_depth_curr.CreateVertexMap(intrinsics_pyr, NAN);
                 source_vertex_maps[n_levels - 1 - i] = source_vertex_map.AsTensor();
 
-                auto target_intensity_grad = target_intensity_curr.FilterSobel();
+                auto target_intensity_grad = target_intensity_curr.FilterSobelMaskout(target_mask_curr.AsTensor());
                 target_intensity_dx[n_levels - 1 - i] =
                         target_intensity_grad.first.AsTensor();
                 target_intensity_dy[n_levels - 1 - i] =
                         target_intensity_grad.second.AsTensor();
 
-                auto target_depth_grad = target_depth_curr.FilterSobel();
+                auto target_depth_grad = target_depth_curr.FilterSobelMaskout(target_mask_curr.AsTensor());
                 target_depth_dx[n_levels - 1 - i] = target_depth_grad.first.AsTensor();
                 target_depth_dy[n_levels - 1 - i] = target_depth_grad.second.AsTensor();
 
@@ -534,8 +536,8 @@ OdometryResult RGBDMOdometryMultiScaleHybrid(
                     source_intensity_curr = source_intensity_curr.PyrDown();
                     target_intensity_curr = target_intensity_curr.PyrDown();
 
-                    source_mask_curr = source_mask_curr.PyrDown();
-                    target_mask_curr = target_mask_curr.PyrDown();
+                    source_mask_curr = source_mask_curr.PyrDownLogical();
+                    target_mask_curr = target_mask_curr.PyrDownLogical();
 
                     intrinsics_pyr /= 2;
                     intrinsics_pyr[-1][-1] = 1;
@@ -547,7 +549,7 @@ OdometryResult RGBDMOdometryMultiScaleHybrid(
         for (int64_t i = 0; i < n_levels; ++i) {
                 for (int iter = 0; iter < criteria[i].max_iteration_; ++iter) {
 
-                        auto delta_result = ComputeDMaskOdometryResultHybrid(
+                        auto delta_result = ComputeMaskoutOdometryResultHybrid(
                                 source_depth_v[i], target_depth_v[i], source_intensity[i],
                                 target_intensity[i], target_depth_dx[i], target_depth_dy[i],
                                 target_intensity_dx[i], target_intensity_dy[i], source_mask[i],
@@ -653,7 +655,7 @@ OdometryResult RGBDMOdometryMultiScaleHybrid(
                 source_intensity_curr = source_intensity_curr.PyrDown();
                 target_intensity_curr = target_intensity_curr.PyrDown();
 
-                source_mask_curr = source_mask_curr.PyrDown();
+                source_mask_curr = source_mask_curr.PyrDownLogical();
 
                 intrinsics_pyr /= 2;
                 intrinsics_pyr[-1][-1] = 1;
@@ -665,7 +667,7 @@ OdometryResult RGBDMOdometryMultiScaleHybrid(
         for (int64_t i = 0; i < n_levels; ++i) {
                 for (int iter = 0; iter < criteria[i].max_iteration_; ++iter) {
 
-                        auto delta_result = ComputeSMaskOdometryResultHybrid(
+                        auto delta_result = ComputeSourceMaskoutOdometryResultHybrid(
                                 source_depth_v[i], target_depth_v[i], source_intensity[i],
                                 target_intensity[i], target_depth_dx[i], target_depth_dy[i],
                                 target_intensity_dx[i], target_intensity_dy[i], source_mask[i],
@@ -735,7 +737,7 @@ OdometryResult RGBDMOdometryMultiScalePointToPlane(
                 target_depth_curr.FilterBilateral(5, 5, 10);
         Image target_vertex_map_smooth =
                 target_depth_curr_smooth.CreateVertexMap(intrinsics_pyr, NAN);
-        Image target_normal_map = target_vertex_map_smooth.CreateNormalMap(NAN);
+        Image target_normal_map = target_vertex_map_smooth.CreateNormalMapMaskout(target_mask_curr.AsTensor(), NAN);
 
         source_vertex_maps[n_levels - 1 - i] = source_vertex_map.AsTensor();
         target_vertex_maps[n_levels - 1 - i] = target_vertex_map.AsTensor();
@@ -751,8 +753,8 @@ OdometryResult RGBDMOdometryMultiScalePointToPlane(
             target_depth_curr = target_depth_curr.PyrDownDepth(
                     params.depth_outlier_trunc_ * 2, NAN);
             
-            source_mask_curr = source_mask_curr.PyrDown();
-            target_mask_curr = target_mask_curr.PyrDown();
+            source_mask_curr = source_mask_curr.PyrDownLogical();
+            target_mask_curr = target_mask_curr.PyrDownLogical();
 
             intrinsics_pyr /= 2;
             intrinsics_pyr[-1][-1] = 1;
@@ -762,7 +764,7 @@ OdometryResult RGBDMOdometryMultiScalePointToPlane(
     OdometryResult result(trans, /*prev rmse*/ 0.0, /*prev fitness*/ 1.0);
     for (int64_t i = 0; i < n_levels; ++i) {
         for (int iter = 0; iter < criteria[i].max_iteration_; ++iter) {
-            auto delta_result = ComputeDMaskOdometryResultPointToPlane(
+            auto delta_result = ComputeMaskoutOdometryResultPointToPlane(
                     source_vertex_maps[i], target_vertex_maps[i],
                     target_normal_maps[i], source_mask[i],
                     target_mask[i], intrinsic_matrices[i],
@@ -842,7 +844,7 @@ OdometryResult RGBDMOdometryMultiScalePointToPlane(
             target_depth_curr = target_depth_curr.PyrDownDepth(
                     params.depth_outlier_trunc_ * 2, NAN);
             
-            source_mask_curr = source_mask_curr.PyrDown();
+            source_mask_curr = source_mask_curr.PyrDownLogical();
 
             intrinsics_pyr /= 2;
             intrinsics_pyr[-1][-1] = 1;
@@ -852,7 +854,7 @@ OdometryResult RGBDMOdometryMultiScalePointToPlane(
     OdometryResult result(trans, /*prev rmse*/ 0.0, /*prev fitness*/ 1.0);
     for (int64_t i = 0; i < n_levels; ++i) {
         for (int iter = 0; iter < criteria[i].max_iteration_; ++iter) {
-            auto delta_result = ComputeSMaskOdometryResultPointToPlane(
+            auto delta_result = ComputeSourceMaskoutOdometryResultPointToPlane(
                     source_vertex_maps[i], target_vertex_maps[i],
                     target_normal_maps[i], source_mask[i],intrinsic_matrices[i],
                     result.transformation_, params.depth_outlier_trunc_,
@@ -879,6 +881,8 @@ OdometryResult RGBDMOdometryMultiScalePointToPlane(
 
     return result;
 }
+
+
 
 OdometryResult RGBDMOdometryMultiScale(
         const RGBDMImage& source,
