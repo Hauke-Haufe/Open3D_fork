@@ -18,7 +18,57 @@ namespace pipelines {
 namespace kernel {
 namespace odometry {
 
-void ComputeDOdometryResultIntensityCPU(
+
+void ComputeSourceMaskoutOdometryResultIntensityCPU(
+        const core::Tensor& source_depth,
+        const core::Tensor& target_depth,
+        const core::Tensor& source_intensity,
+        const core::Tensor& target_intensity,
+        const core::Tensor& target_intensity_dx,
+        const core::Tensor& target_intensity_dy,
+        const core::Tensor& source_vertex_map,
+        const core::Tensor& source_mask, 
+        const core::Tensor& intrinsics,
+        const core::Tensor& init_source_to_target,
+        core::Tensor& delta,
+        float& inlier_residual,
+        int& inlier_count,
+        const float depth_outlier_trunc,
+        const float intensity_huber_delta);
+
+void ComputeSourceMaskoutOdometryResultHybridCPU(const core::Tensor& source_depth,
+                                    const core::Tensor& target_depth,
+                                    const core::Tensor& source_intensity,
+                                    const core::Tensor& target_intensity,
+                                    const core::Tensor& target_depth_dx,
+                                    const core::Tensor& target_depth_dy,
+                                    const core::Tensor& target_intensity_dx,
+                                    const core::Tensor& target_intensity_dy,
+                                    const core::Tensor& source_vertex_map,
+                                    const core::Tensor& source_mask,
+                                    const core::Tensor& intrinsics,
+                                    const core::Tensor& init_source_to_target,
+                                    core::Tensor& delta,
+                                    float& inlier_residual,
+                                    int& inlier_count,
+                                    float depth_outlier_trunc,
+                                    const float depth_huber_delta,
+                                    const float intensity_huber_delta);
+
+void ComputeSourceMaskoutOdometryResultPointToPlaneCPU(
+        const core::Tensor &source_vertex_map,
+        const core::Tensor &target_vertex_map,
+        const core::Tensor &target_normal_map,
+        const core::Tensor &source_mask, 
+        const core::Tensor &intrinsics,
+        const core::Tensor &init_source_to_target,
+        core::Tensor &delta,
+        float &inlier_residual,
+        int &inlier_count,
+        const float depth_outlier_trunc,
+        const float depth_huber_delta);
+
+void ComputeMaskoutOdometryResultIntensityCPU(
         const core::Tensor& source_depth,
         const core::Tensor& target_depth,
         const core::Tensor& source_intensity,
@@ -36,25 +86,7 @@ void ComputeDOdometryResultIntensityCPU(
         const float depth_outlier_trunc,
         const float intensity_huber_delta);
 
-void ComputeSOdometryResultIntensityCPU(
-        const core::Tensor& source_depth,
-        const core::Tensor& target_depth,
-        const core::Tensor& source_intensity,
-        const core::Tensor& target_intensity,
-        const core::Tensor& target_intensity_dx,
-        const core::Tensor& target_intensity_dy,
-        const core::Tensor& source_vertex_map,
-        const core::Tensor& source_mask, 
-        const core::Tensor& intrinsics,
-        const core::Tensor& init_source_to_target,
-        core::Tensor& delta,
-        float& inlier_residual,
-        int& inlier_count,
-        const float depth_outlier_trunc,
-        const float intensity_huber_delta);
-
-
-void ComputeDMaskOdometryResultHybridCPU(const core::Tensor& source_depth,
+void ComputeMaskoutOdometryResultHybridCPU(const core::Tensor& source_depth,
                                     const core::Tensor& target_depth,
                                     const core::Tensor& source_intensity,
                                     const core::Tensor& target_intensity,
@@ -74,44 +106,13 @@ void ComputeDMaskOdometryResultHybridCPU(const core::Tensor& source_depth,
                                     const float depth_huber_delta,
                                     const float intensity_huber_delta);
 
-void ComputeSMaskOdometryResultHybridCPU(const core::Tensor& source_depth,
-                                    const core::Tensor& target_depth,
-                                    const core::Tensor& source_intensity,
-                                    const core::Tensor& target_intensity,
-                                    const core::Tensor& target_depth_dx,
-                                    const core::Tensor& target_depth_dy,
-                                    const core::Tensor& target_intensity_dx,
-                                    const core::Tensor& target_intensity_dy,
-                                    const core::Tensor& source_vertex_map,
-                                    const core::Tensor& source_mask,
-                                    const core::Tensor& intrinsics,
-                                    const core::Tensor& init_source_to_target,
-                                    core::Tensor& delta,
-                                    float& inlier_residual,
-                                    int& inlier_count,
-                                    float depth_outlier_trunc,
-                                    const float depth_huber_delta,
-                                    const float intensity_huber_delta);
 
-void ComputeDMaskOdometryResultPointToPlaneCPU(
+void ComputeMaskoutOdometryResultPointToPlaneCPU(
         const core::Tensor &source_vertex_map,
         const core::Tensor &target_vertex_map,
         const core::Tensor &target_normal_map,
         const core::Tensor &source_mask, 
         const core::Tensor &target_mask,
-        const core::Tensor &intrinsics,
-        const core::Tensor &init_source_to_target,
-        core::Tensor &delta,
-        float &inlier_residual,
-        int &inlier_count,
-        const float depth_outlier_trunc,
-        const float depth_huber_delta);
-
-void ComputeSMaskOdometryResultPointToPlaneCPU(
-        const core::Tensor &source_vertex_map,
-        const core::Tensor &target_vertex_map,
-        const core::Tensor &target_normal_map,
-        const core::Tensor &source_mask, 
         const core::Tensor &intrinsics,
         const core::Tensor &init_source_to_target,
         core::Tensor &delta,
@@ -122,7 +123,56 @@ void ComputeSMaskOdometryResultPointToPlaneCPU(
 
 #ifdef BUILD_CUDA_MODULE
 
-void ComputeDOdometryResultIntensityCUDA(
+void ComputeSourceMaskoutOdometryResultPointToPlaneCUDA(
+        const core::Tensor &source_vertex_map,
+        const core::Tensor &target_vertex_map,
+        const core::Tensor &target_normal_map,
+        const core::Tensor &source_mask, 
+        const core::Tensor &intrinsics,
+        const core::Tensor &init_source_to_target,
+        core::Tensor &delta,
+        float &inlier_residual,
+        int &inlier_count,
+        const float depth_outlier_trunc,
+        const float depth_huber_delta);
+
+void ComputeSourceMaskoutOdometryResultIntensityCUDA(
+        const core::Tensor& source_depth,
+        const core::Tensor& target_depth,
+        const core::Tensor& source_intensity,
+        const core::Tensor& target_intensity,
+        const core::Tensor& target_intensity_dx,
+        const core::Tensor& target_intensity_dy,
+        const core::Tensor& source_vertex_map,
+        const core::Tensor& source_mask, 
+        const core::Tensor& intrinsics,
+        const core::Tensor& init_source_to_target,
+        core::Tensor& delta,
+        float& inlier_residual,
+        int& inlier_count,
+        const float depth_outlier_trunc,
+        const float intensity_huber_delta);
+
+void ComputeSourceMaskoutOdometryResultHybridCUDA(const core::Tensor& source_depth,
+                                    const core::Tensor& target_depth,
+                                    const core::Tensor& source_intensity,
+                                    const core::Tensor& target_intensity,
+                                    const core::Tensor& target_depth_dx,
+                                    const core::Tensor& target_depth_dy,
+                                    const core::Tensor& target_intensity_dx,
+                                    const core::Tensor& target_intensity_dy,
+                                    const core::Tensor& source_vertex_map,
+                                    const core::Tensor& source_mask,
+                                    const core::Tensor& intrinsics,
+                                    const core::Tensor& init_source_to_target,
+                                    core::Tensor& delta,
+                                    float& inlier_residual,
+                                    int& inlier_count,
+                                    float depth_outlier_trunc,
+                                    const float depth_huber_delta,
+                                    const float intensity_huber_delta);
+
+void ComputeMaskoutOdometryResultIntensityCUDA(
         const core::Tensor& source_depth,
         const core::Tensor& target_depth,
         const core::Tensor& source_intensity,
@@ -140,24 +190,8 @@ void ComputeDOdometryResultIntensityCUDA(
         const float depth_outlier_trunc,
         const float intensity_huber_delta);
 
-void ComputeSOdometryResultIntensityCUDA(
-        const core::Tensor& source_depth,
-        const core::Tensor& target_depth,
-        const core::Tensor& source_intensity,
-        const core::Tensor& target_intensity,
-        const core::Tensor& target_intensity_dx,
-        const core::Tensor& target_intensity_dy,
-        const core::Tensor& source_vertex_map,
-        const core::Tensor& source_mask, 
-        const core::Tensor& intrinsics,
-        const core::Tensor& init_source_to_target,
-        core::Tensor& delta,
-        float& inlier_residual,
-        int& inlier_count,
-        const float depth_outlier_trunc,
-        const float intensity_huber_delta);
 
-void ComputeDMaskOdometryResultHybridCUDA(const core::Tensor& source_depth,
+void ComputeMaskoutOdometryResultHybridCUDA(const core::Tensor& source_depth,
                                     const core::Tensor& target_depth,
                                     const core::Tensor& source_intensity,
                                     const core::Tensor& target_intensity,
@@ -177,44 +211,12 @@ void ComputeDMaskOdometryResultHybridCUDA(const core::Tensor& source_depth,
                                     const float depth_huber_delta,
                                     const float intensity_huber_delta);
 
-void ComputeSMaskOdometryResultHybridCUDA(const core::Tensor& source_depth,
-                                    const core::Tensor& target_depth,
-                                    const core::Tensor& source_intensity,
-                                    const core::Tensor& target_intensity,
-                                    const core::Tensor& target_depth_dx,
-                                    const core::Tensor& target_depth_dy,
-                                    const core::Tensor& target_intensity_dx,
-                                    const core::Tensor& target_intensity_dy,
-                                    const core::Tensor& source_vertex_map,
-                                    const core::Tensor& source_mask,
-                                    const core::Tensor& intrinsics,
-                                    const core::Tensor& init_source_to_target,
-                                    core::Tensor& delta,
-                                    float& inlier_residual,
-                                    int& inlier_count,
-                                    float depth_outlier_trunc,
-                                    const float depth_huber_delta,
-                                    const float intensity_huber_delta);
-
-void ComputeDMaskOdometryResultPointToPlaneCUDA(
+void ComputeMaskoutOdometryResultPointToPlaneCUDA(
         const core::Tensor &source_vertex_map,
         const core::Tensor &target_vertex_map,
         const core::Tensor &target_normal_map,
         const core::Tensor &source_mask, 
         const core::Tensor &target_mask,
-        const core::Tensor &intrinsics,
-        const core::Tensor &init_source_to_target,
-        core::Tensor &delta,
-        float &inlier_residual,
-        int &inlier_count,
-        const float depth_outlier_trunc,
-        const float depth_huber_delta);
-
-void ComputeSMaskOdometryResultPointToPlaneCUDA(
-        const core::Tensor &source_vertex_map,
-        const core::Tensor &target_vertex_map,
-        const core::Tensor &target_normal_map,
-        const core::Tensor &source_mask, 
         const core::Tensor &intrinsics,
         const core::Tensor &init_source_to_target,
         core::Tensor &delta,

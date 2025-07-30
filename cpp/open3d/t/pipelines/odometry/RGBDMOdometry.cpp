@@ -27,7 +27,7 @@ using t::geometry::RGBDImage;
 using t::geometry::RGBDMImage;
 using t::pipelines::odometry::OdometryResult;
 
-OdometryResult ComputeDOdometryResultIntensity(const Tensor &source_depth,
+OdometryResult ComputeMaskoutOdometryResultIntensity(const Tensor &source_depth,
                                     const Tensor &target_depth,
                                     const Tensor &source_intensity,
                                     const Tensor &target_intensity,
@@ -44,7 +44,7 @@ OdometryResult ComputeDOdometryResultIntensity(const Tensor &source_depth,
         Tensor se3_delta;
         float inlier_residual;
         int inlier_count;
-        kernel::odometry::ComputeDMaskOdometryResultIntensity(
+        kernel::odometry::ComputeMaskoutOdometryResultIntensity(
                 source_depth, target_depth, source_intensity, target_intensity,
                 target_intensity_dx,
                 target_intensity_dy, source_vertex_map, source_mask, 
@@ -63,7 +63,7 @@ OdometryResult ComputeDOdometryResultIntensity(const Tensor &source_depth,
                                                 source_vertex_map.GetShape(1)));                  
 }
 
-OdometryResult ComputeSOdometryResultIntensity(const Tensor &source_depth,
+OdometryResult ComputeSourceMaskoutOdometryResultIntensity(const Tensor &source_depth,
                                     const Tensor &target_depth,
                                     const Tensor &source_intensity,
                                     const Tensor &target_intensity,
@@ -79,7 +79,7 @@ OdometryResult ComputeSOdometryResultIntensity(const Tensor &source_depth,
         Tensor se3_delta;
         float inlier_residual;
         int inlier_count;
-        kernel::odometry::ComputeSMaskOdometryResultIntensity(
+        kernel::odometry::ComputeSourceMaskoutOdometryResultIntensity(
                 source_depth, target_depth, source_intensity, target_intensity,
                 target_intensity_dx,
                 target_intensity_dy, source_vertex_map, source_mask, intrinsics,
@@ -97,7 +97,7 @@ OdometryResult ComputeSOdometryResultIntensity(const Tensor &source_depth,
                                                 source_vertex_map.GetShape(1)));                  
 }
 
-OdometryResult ComputeDMaskOdometryResultHybrid(const Tensor& source_depth,
+OdometryResult ComputeMaskoutOdometryResultHybrid(const Tensor& source_depth,
                                            const Tensor& target_depth,
                                            const Tensor& source_intensity,
                                            const Tensor& target_intensity,
@@ -118,7 +118,7 @@ OdometryResult ComputeDMaskOdometryResultHybrid(const Tensor& source_depth,
         Tensor se3_delta;
         float inlier_residual;
         int inlier_count;
-        kernel::odometry::ComputeDMaskOdometryResultHybrid(
+        kernel::odometry::ComputeMaskoutOdometryResultHybrid(
                 source_depth, target_depth, source_intensity, target_intensity,
                 target_depth_dx, target_depth_dy, target_intensity_dx,
                 target_intensity_dy, source_vertex_map, source_mask, 
@@ -137,7 +137,7 @@ OdometryResult ComputeDMaskOdometryResultHybrid(const Tensor& source_depth,
                                                 source_vertex_map.GetShape(1)));
 }
 
-OdometryResult ComputeSMaskOdometryResultHybrid(const Tensor& source_depth,
+OdometryResult ComputeSourceMaskoutOdometryResultHybrid(const Tensor& source_depth,
                                            const Tensor& target_depth,
                                            const Tensor& source_intensity,
                                            const Tensor& target_intensity,
@@ -157,7 +157,7 @@ OdometryResult ComputeSMaskOdometryResultHybrid(const Tensor& source_depth,
         Tensor se3_delta;
         float inlier_residual;
         int inlier_count;
-        kernel::odometry::ComputeSMaskOdometryResultHybrid(
+        kernel::odometry::ComputeSourceMaskoutOdometryResultHybrid(
                 source_depth, target_depth, source_intensity, target_intensity,
                 target_depth_dx, target_depth_dy, target_intensity_dx,
                 target_intensity_dy, source_vertex_map, source_mask, intrinsics,
@@ -175,7 +175,7 @@ OdometryResult ComputeSMaskOdometryResultHybrid(const Tensor& source_depth,
                                                 source_vertex_map.GetShape(1)));
 }
 
-OdometryResult ComputeDMaskOdometryResultPointToPlane(
+OdometryResult ComputeMaskoutOdometryResultPointToPlane(
         const Tensor& source_vertex_map,
         const Tensor& target_vertex_map,
         const Tensor& target_normal_map,
@@ -189,7 +189,7 @@ OdometryResult ComputeDMaskOdometryResultPointToPlane(
     Tensor se3_delta;
     float inlier_residual;
     int inlier_count;
-    kernel::odometry::ComputeDMaskOdometryResultPointToPlane(
+    kernel::odometry::ComputeMaskoutOdometryResultPointToPlane(
             source_vertex_map, target_vertex_map, target_normal_map, 
             source_mask, target_mask, intrinsics,
             init_source_to_target, se3_delta, inlier_residual, inlier_count,
@@ -206,7 +206,7 @@ OdometryResult ComputeDMaskOdometryResultPointToPlane(
                                           source_vertex_map.GetShape(1)));
 }
 
-OdometryResult ComputeSMaskOdometryResultPointToPlane(
+OdometryResult ComputeSourceMaskoutOdometryResultPointToPlane(
         const Tensor& source_vertex_map,
         const Tensor& target_vertex_map,
         const Tensor& target_normal_map,
@@ -219,7 +219,7 @@ OdometryResult ComputeSMaskOdometryResultPointToPlane(
     Tensor se3_delta;
     float inlier_residual;
     int inlier_count;
-    kernel::odometry::ComputeSMaskOdometryResultPointToPlane(
+    kernel::odometry::ComputeSourceMaskoutOdometryResultPointToPlane(
             source_vertex_map, target_vertex_map, target_normal_map, 
             source_mask, intrinsics,
             init_source_to_target, se3_delta, inlier_residual, inlier_count,
@@ -291,7 +291,7 @@ OdometryResult RGBDMOdometryMultiScaleIntensity(
                 source_depth_curr.CreateVertexMap(intrinsics_pyr, NAN);
         source_vertex_maps[n_levels - 1 - i] = source_vertex_map.AsTensor();
 
-        auto target_intensity_grad = target_intensity_curr.FilterSobel();
+        auto target_intensity_grad = target_intensity_curr.FilterSobelMaskout();
         target_intensity_dx[n_levels - 1 - i] =
                 target_intensity_grad.first.AsTensor();
         target_intensity_dy[n_levels - 1 - i] =
