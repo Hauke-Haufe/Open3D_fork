@@ -117,15 +117,14 @@ void CreateNormalMapMaskout(const core::Tensor &src,
     }
 }
 
-void FilterSobelMaskout(const core::Tensor &src, 
-                        const core::Tensor& mask,
-                        core::Tensor& dx, 
-                        core::Tensor& dy){
+void Maskout(core::Tensor& src, 
+             const core::Tensor& mask){
     core::Device device = src.GetDevice();
+    core::AssertTensorDtype(mask, core::Bool);
     if (device.IsCPU()) {
-        FilterSobelMaskoutCPU(src, mask, dx, dy);
+        MaskoutCPU(src, mask);
     } else if (device.IsCUDA()) {
-        CUDA_CALL(FilterSobelMaskoutCUDA, src, mask, dx, dy);
+        CUDA_CALL(MaskoutCUDA, src, mask);
     } else {
         utility::LogError("Unimplemented device");
     }

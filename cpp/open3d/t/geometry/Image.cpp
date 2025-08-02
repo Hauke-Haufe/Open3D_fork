@@ -392,34 +392,13 @@ std::pair<Image, Image> Image::FilterSobel(int kernel_size) const {
 }
 
 std::pair<Image, Image> Image::FilterSobelMaskout(const core::Tensor& mask) const {
-    if (GetRows() <= 0 || GetCols() <= 0 || GetChannels() != 1) {
-        utility::LogError(
-                "Invalid shape, expected a 1 channel image, but got ({}, {}, "
-                "{})",
-                GetRows(), GetCols(), GetChannels());
-    }
     core::AssertTensorShape(mask, AsTensor().GetShape());
+    std::pair<Image, Image> dxdy = FilterSobel();
 
-    Image dst_im_dx, dst_im_dy;
-    core::Dtype dtype = GetDtype();
-    if (dtype == core::Float32) {
-        dst_im_dx = core::Tensor::EmptyLike(data_);
-        dst_im_dy = core::Tensor::EmptyLike(data_);
-    } else if (dtype == core::UInt8) {
-        dst_im_dx = core::Tensor::Empty(data_.GetShape(), core::Int8,
-                                        data_.GetDevice());
-        dst_im_dy = core::Tensor::Empty(data_.GetShape(), core::Int8,
-                                        data_.GetDevice());
-    }
+    kernel::image::Maskout(dxdy.first.data_, mask);
+    kernel::image::Maskout(dxdy.second.data_, mask);
 
-    kernel::image::FilterSobelMaskout(AsTensor(), mask, dst_im_dx.data_, dst_im_dy.data_);
-
-    if (dtype == core::UInt8){
-        dst_im_dx =  dst_im_dx.To(core::UInt16);
-        dst_im_dy = dst_im_dy.To(core::UInt16);
-    }
-
-    return std::make_pair(dst_im_dx, dst_im_dy);
+    return dxdy;
 }
 
 Image Image::PyrDown() const {

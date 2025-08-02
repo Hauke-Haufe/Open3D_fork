@@ -49,10 +49,8 @@ void CreateNormalMapMaskout(const core::Tensor &src,
                             const core::Tensor &mask, 
                             float invalid_fill);
 
-void FilterSobelMaskout(const core::Tensor &src, 
-                        const core::Tensor& mask,
-                        core::Tensor& dx, 
-                        core::Tensor& dy);
+void Maskout(core::Tensor& src, 
+             const core::Tensor& mask);
 
 void ColorizeDepth(const core::Tensor &src,
                    core::Tensor &dst,
@@ -94,10 +92,8 @@ void CreateNormalMapMaskoutCPU(const core::Tensor& src,
                                 const core::Tensor& mask, 
                                 float invalid_fill);
 
-void FilterSobelMaskoutCPU(const core::Tensor &src, 
-                        const core::Tensor& mask,
-                        core::Tensor& dx, 
-                        core::Tensor& dy);
+void MaskoutCPU(core::Tensor& src, 
+                const core::Tensor& mask);
 
 void ColorizeDepthCPU(const core::Tensor &src,
                       core::Tensor &dst,
@@ -136,10 +132,8 @@ void CreateNormalMapMaskoutCUDA(const core::Tensor& src,
                                 const core::Tensor& mask, 
                                 float invalid_fill);
 
-void FilterSobelMaskoutCUDA(const core::Tensor &src, 
-                        const core::Tensor& mask,
-                        core::Tensor& dx, 
-                        core::Tensor& dy);
+void MaskoutCUDA(core::Tensor& src, 
+             const core::Tensor& mask);
 
 void CreateNormalMapCUDA(const core::Tensor &src,
                          core::Tensor &dst,

@@ -417,26 +417,20 @@ void CreateNormalMapMaskoutCPU
 }
 
 #ifdef __CUDACC__
-void FilterSobelMaskoutCUDA
+void MaskoutCUDA
 #else
-void FilterSobelMaskoutCPU
+void MaskoutCPU
 #endif
-        (const core::Tensor& src,
-         const core::Tensor& mask, 
-         core::Tensor& dx_tensor, 
-         core::Tensor& dy_tensor){
+        (core::Tensor& src,
+         const core::Tensor& mask){
 
     NDArrayIndexer src_indexer(src, 2);
-    NDArrayIndexer dx_indexer(dx_tensor, 2);
-    NDArrayIndexer dy_indexer(dy_tensor, 2);
     NDArrayIndexer mask_indexer(mask, 2);
 
     int64_t rows = src_indexer.GetShape(0);
     int64_t cols = src_indexer.GetShape(1);
     int64_t n = rows * cols;
 
-    constexpr int sobel_x[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
-    constexpr int sobel_y[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
 
     DISPATCH_DTYPE_TO_TEMPLATE(src.GetDtype(), [&]() {
         core::ParallelFor(
@@ -444,41 +438,25 @@ void FilterSobelMaskoutCPU
                 int64_t y = idx / cols;
                 int64_t x = idx % cols;
 
-                if (x == 0 || y == 0 || x == cols - 1 || y == rows - 1){
-                    *dx_indexer.GetDataPtr<scalar_t>(x, y) = 0;
-                    *dy_indexer.GetDataPtr<scalar_t>(x, y) = 0;
-                    return;
-                }
-
                 bool masked = false;
-                for (int dy = -1; dy <= 1 && !masked; ++dy) {
-                    for (int dx = -1; dx <= 1 && !masked; ++dx) {
-                        if (*mask_indexer.GetDataPtr<bool>(x + dx, y + dy)) {
+                for (int dy = -2; dy <= 2 && !masked; ++dy) {
+                    for (int dx = -2; dx <= 2 && !masked; ++dx) {
+                        int nx = x + dx;
+                        int ny = y + dy;
+
+                        nx = nx < 0 ? 0 : (nx >= cols ? cols - 1 : nx);
+                        ny = ny < 0 ? 0 : (ny >= rows ? rows - 1 : ny);
+
+                        if (*mask_indexer.GetDataPtr<bool>(nx, ny)) {
                             masked = true;
                         }
                     }
                 }
 
                 if (masked){
-                    *dx_indexer.GetDataPtr<scalar_t>(x, y) = 0;
-                    *dy_indexer.GetDataPtr<scalar_t>(x, y) = 0;
-                    return;
+                    *src_indexer.GetDataPtr<scalar_t>(x,y) = 0;
                 }
 
-                float gx = 0.0f;
-                float gy = 0.0f;
-                
-                for (int ky = -1; ky <= 1; ++ky) {
-                    for (int kx = -1; kx <= 1; ++kx) {
-                        float val = static_cast<float>(
-                            src_indexer.GetDataPtr<scalar_t>(x + kx, y + ky)[0]);
-                        gx += val * sobel_x[ky + 1][kx + 1];
-                        gy += val * sobel_y[ky + 1][kx + 1];
-                    }
-                }
-
-                *dx_indexer.GetDataPtr<scalar_t>(x, y) = static_cast<scalar_t>(gx);
-                *dy_indexer.GetDataPtr<scalar_t>(x, y) = static_cast<scalar_t>(gy);
             });
     });
 }
