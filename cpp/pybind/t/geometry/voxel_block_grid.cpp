@@ -163,6 +163,26 @@ void pybind_voxel_block_grid_definitions(py::module& m) {
             "depth_max"_a.noconvert() = 3.0f,
             "trunc_voxel_multiplier"_a.noconvert() = 8.0f);
 
+   vbg.def("masked_integrate",&VoxelBlockGrid::MaskedIntegrate, 
+           "Specific operation for TSDF volumes."
+            "Similar to RGB-D integration, but only integrates pixels"
+            "outsite the mask",
+            "block_coords"_a, "depth"_a, "color"_a, "mask"_a,
+            "intrinsic"_a, "extrinsic"_a,
+            "depth_scale"_a.noconvert() = 1000.0f,
+            "depth_max"_a.noconvert() = 3.0f,
+            "trunc_voxel_multiplier"_a.noconvert() = 8.0f);
+
+   vbg.def("semantic_integrate", &VoxelBlockGrid::SemanticIntegrate, 
+           "Specific operation for TSDF volumes."
+            "Similar to RGB-D integration, but also integrates lables"
+            "in the voxel block grid",
+            "block_coords"_a, "depth"_a, "color"_a, "mask"_a,
+            "intrinsic"_a, "extrinsic"_a,
+            "depth_scale"_a.noconvert() = 1000.0f,
+            "depth_max"_a.noconvert() = 3.0f,
+            "trunc_voxel_multiplier"_a.noconvert() = 8.0f);
+
     vbg.def("ray_cast", &VoxelBlockGrid::RayCast,
             "Specific operation for TSDF volumes."
             "Perform volumetric ray casting in the selected block coordinates."
@@ -176,6 +196,8 @@ void pybind_voxel_block_grid_definitions(py::module& m) {
             "depth_scale"_a = 1000.0f, "depth_min"_a = 0.1f,
             "depth_max"_a = 3.0f, "weight_threshold"_a = 3.0f,
             "trunc_voxel_multiplier"_a = 8.0f, "range_map_down_factor"_a = 8);
+
+   
 
     vbg.def("extract_point_cloud", &VoxelBlockGrid::ExtractPointCloud,
             "Specific operation for TSDF volumes."
