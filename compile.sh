@@ -11,7 +11,7 @@ mkdir -p ~/src/Open3D_fork
 
 #compiles Open3d 
 cd $SCRIPT_DIR/build 
-cmake -DBUILD_CUDA_MODULE=true -DPYTHON_EXECUTABLE=$(which python)-DBUILD_LIBREALSENSE=true -DBUILD_EXAMPLES=false -DCMAKE_INSTALL_PREFIX=~/src/Open3D_fork -DCMAKE_BUILD_TYPE=Release ..
+cmake -DWITH_OPENMP=true -DBUILD_CUDA_MODULE=true -DPYTHON_EXECUTABLE=$(which python)-DBUILD_LIBREALSENSE=true -DBUILD_EXAMPLES=false -DCMAKE_INSTALL_PREFIX=~/src/Open3D_fork -DCMAKE_BUILD_TYPE=Release ..
 make -j6
 make install 
 make python-package
